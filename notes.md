@@ -72,3 +72,16 @@
          - once created, run the following commands in the Cloud9 terminal window:
             - git remote add origin git@github:user-name/repo-name.git
             - git push -u origin master
+
+# Configure a Run Configuration
+
+   * In Cloud9, go to Run -> Run Configurations -> New Run Configuration
+      - in the terminal window:
+        - type the name of the application (e.g. 'learn-ruby-on-rails') in the run config name field
+        - enter 'rails s -b 0.0.0.0' in the command field
+        - click 'CWD', and select the application folder
+        - click 'Run' to start the rails server
+        
+   * Previewing in the browser:
+      - go to Preview -> Preview Running Application
+      - in the browser window that appears, click the 'pop out into a new window' icon
