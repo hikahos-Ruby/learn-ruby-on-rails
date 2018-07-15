@@ -1,4 +1,4 @@
-Ruby on Rails development using AWS Cloud 9 IDE
+# Ruby on Rails development using AWS Cloud 9 IDE
 
 # Configure a new Cloud9 Environment on AWS
 
