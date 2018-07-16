@@ -1,4 +1,5 @@
 ################################################################ SP 2013 ###########################################################################
+//export-Users.html
 <html>
     <head>
         <meta charset="utf-8">
@@ -123,7 +124,7 @@
 </html>
 
 ################################################################## PHP / MySQL #########################################################################
-
+// import-Users.php
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -270,21 +271,470 @@
     </body>
 </html>
 
-
-
-
-
 ################################################################## SP 2013 #########################################################################
-
+// export-List.html
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Export Custom List</title>
+        <style>
+            #tableData table, th, td {
+                border: 1px solid gray;
+                border-collapse: collapse;
+                padding: 2px 10px;
+            }
+            #tableHeader, #buttonUpdate {
+                display: inline-block;
+                margin: 10px;
+            }
+        </style>
     </head>
     <body>
-    
+        <h3 id="tableHeader">Custom List</h3>
+        <input id="buttonUpdate" type="button" value="Export as CSV">
+        <div id="tableData"></div>
+        
+        <script src="jquery"></script>
+        <script src="moment.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                var getListItems = $.Deferred(),
+                    items = items || {},
+                    response = response || [],
+                    count = 0,
+                    url = "https://SP-domain/sites/site-name/_vti_bin/listdata.svc/list-name?$expand=CreatedBy,ModifiedBy";
+                getListItems = function GetListItems() {
+                    $.ajax({
+                        headers:{
+                            Accept:"application/json;odata=verbose"
+                        },
+                        url:url,
+                        //async:false,
+                        method:"GET",
+                        success: function(data) {
+                            response = response.concat(data.d.results);
+                            if (data.d.__next) {
+                                url = data.d.__next;
+                                GetListItems();
+                            } else {
+                                $.each(response, function(key,value) {
+                                    var obj = {};
+                                    $.each(value, function(key, value) {
+                                        if (typeof value !== "object") {
+                                            obj[key] = value === null ? "" : value;
+                                        } else if (key === "CreatedBy" || key === "ModifiedBy") {
+                                            var parentKey = key;
+                                            $.each(value, function(key,value) {
+                                                if (key === "Name") {
+                                                    switch (parentKey) {
+                                                        case "CreatedBy":
+                                                            obj["CreatedBy"] = value === null ? "" : value;
+                                                            break;
+                                                        case "ModifiedBy":
+                                                            obj["ModifiedBy"] = value === null ? "" : value;
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                    engagement[key] = obj;
+                                });
+                            }
+                        },
+                        error: function(data) {
+                            console.log(JSON.stringify(data));
+                        }
+                    });
+                }
+                
+                buildTable = function BuildTable() {
+                    var html = "";
+                    html += "<table><thead><tr>";
+                    html += "<th>ID</th>";
+                    html += "<th>Created</th>";
+                    html += "<th>CreatedBy</th>";
+                    html += "<th>Modified</th>";
+                    html += "<th>ModifiedBy</th><tbody>";
+                    
+                    $.each(items, function(item) {
+                        html += "<tr>";
+                        html += "<td>" + validateValue(items[item].Id,"string","") + "</td>";
+                        html += "<td>" + validateValue(items[item].Created,"date","MM/DD/YYYY HH:mm") + "</td>";
+                        html += "<td>" + validateValue(items[item].CreatedBy,"string","") + "</td>";
+                        html += "<td>" + validateValue(items[item].Modified,"date","MM/DD/YYYY HH:mm") + "</td>";
+                        html += "<td>" + validateValue(items[item].ModifiedBy,"string","") + "</td>";
+                        count++;
+                    });
+                    
+                    html += "</tbody></table>";
+                    $("#tableData").append(html);
+                    $("#tableHeader").text("Custom List (Count: " + count.toString() + ")");
+                }
+                
+                $.when(getListItems).done(buildTable);
+                
+                // export data to a csv file
+                $("#buttonExport").on("click", function() {
+                    var csvData = "";
+                    var separator = "%%";
+                    $.each(items, function(item) {
+                        csvData += "ID:" + validateValue(items[item].Id,"string","") + separator;
+                        csvData += "Created:" + validateValue(items[item].Created,"date","MM/DD/YYYY HH:mm") + separator;
+                        csvData += "CreatedBy:" + validateValue(items[item].CreatedBy,"string","") + separator;
+                        csvData += "Modified:" + validateValue(items[item].Modified,"date","MM/DD/YYYY HH:mm") + separator;
+                        csvData += "ModifiedBy:" + validateValue(items[item].ModifiedBy,"string","");
+                        csvData += "\n";
+                    });
+                    download(csvData,"customList.csv","text/csv");
+                });
+                
+                // function that outputs the csv file
+                function download(data, filename, type) {
+                    var file = new Blob([data], {type: type});
+                    if (window.navigator.msSaveOrOpenBlob) { // IE10+
+                        window.navigator.msSaveOrOpenBlob(file, filename);
+                    } else { // others
+                        var a = document.createElement("a"),
+                            url = URL.createObjectURL(file);
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(function() {
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }, 0);
+                    }
+                }
+                
+                // validating values
+                function validateValue(value, type, format) {
+                    var result = "";
+                    var removeChars = /[\x00-\x1F\-\x9F]/g; // non-visible characters
+                    switch (type) {
+                        case "string":
+                            result = value !== undefined ? String(value).replace(removeChars,"") : "";
+                            break;
+                        case "date":
+                            result = moment(value).isValid() ? moment(value).format(format) : "";
+                    }
+                    return result;
+                }
+            });
+        </script>
     </body>
 </html>
 
 ################################################################## PHP / MySQL #########################################################################
+// import-List.php
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Update List</title>
+        <style>
+            #tableData table, th, td {
+                border: 1px solid gray;
+                border-collapse: collapse;
+                padding: 2px 10px;
+            }
+            #tableHeader, #buttonUpdate {
+                display: inline-block;
+                margin: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h3 id="tableHeader">Custom List</h3>
+        <input id="buttonUpdate" type="button" value="Import to MySQL">
+        <div id="tableData"></div>
+        
+        <script src="jquery"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                var data = {};
+                $.get("../files/customList.csv", function(csvString) {
+                    var items = csvString.split("\n"),
+                        count = 0,
+                        html = "";
+                    html += "<table><thead><tr>";
+                    html += "<th>ID</th>";
+                    html += "<th>Created</th>";
+                    html += "<th>CreatedBy</th>";
+                    html += "<th>Modified</th>";
+                    html += "<th>ModifiedBy</th><tbody>";
+                    
+                    $.each(items, function(item) {
+                        if (this.trim().length > 0) {
+                            var thisItem = this.split("%%");
+                            var thisID = validateValue(thisItem[0],"ID:"),
+                                thisCreated = validateValue(thisItem[1],"Created:"),
+                                thisCreatedBy = validateValue(thisItem[2],"CreatedBy:"),
+                                thisModified = validateValue(thisItem[3],"Modified:"),
+                                thisModifiedBy = validateValue(thisItem[4],"ModifiedBy:");
+                            // display data on page in tabular form
+                            html += "<tr>";
+                            html += "<td>" + thisID + "</td>";
+                            html += "<td>" + thisCreated + "</td>";
+                            html += "<td>" + thisCreatedBy + "</td>";
+                            html += "<td>" + thisModified + "</td>";
+                            html += "<td>" + thisModifiedBy + "</td>";
+                            html += "</tr>";
+                            // populate data object with key value pairs
+                            var obj = {
+                                ID:thisID,
+                                Created:thisCreated,
+                                CreatedBy:thisCreatedBy,
+                                Modified:thisModified,
+                                ModifiedBy:thisModifiedBy
+                            };
+                            data[item] = obj;
+                            // increment counter
+                            count++;
+                        }
+                    });
+                    html += "</tbody></table>"; 
+                    $("#tableData").append(html);
+                    $("#tableHeader").text("Custom List (Count: " + count.toString() + ")");
+                });
+                // insert records in MySQL
+                $("#buttonUpdate").on("click", function() {
+                    $(this).attr("value","Updating db-table...");
+                    var tableName = "db-table";
+                    // get list of all ID's
+                    var arrID = [];
+                    var listID = {
+                        columns:"ID",
+                        fieldName:"NA",
+                        tableName:tableName
+                    }
+                    $.ajax({
+                        async:false,
+                        data:listID,
+                        url:"../dal/getItems.php",
+                        method:"GET",
+                        success: function(data) {
+                            var arrData = data.split(",");
+                            $.each(arrData, function(key,value) {
+                                var newValue = value.substr(value.indexOf(":") + 2);
+                                newValue = newValue.substr(0,newValue.indexOf("\""));
+                                arrID.push(newValue);
+                            });
+                        },
+                        error: function(data) {
+                            // console.log(data);
+                        }
+                    });
+                    $.when(
+                        $.each(data,function(item) {
+                            var insertItem = {
+                                ID:data[item].ID,
+                                Created:data[item].Created,
+                                CreatedBy:data[item].CreatedBy,
+                                Modified:data[item].Modified,
+                                ModifiedBy:data[item].ModifiedBy,
+                                tableName:tableName
+                            }
+                            // insert new record, if not existing
+                            if (arrID.indexOf(data[item].ID) === -1) {
+                                console.log(data[item].ID);
+                                $.ajax({
+                                    data:insertItem,
+                                    url:"../dal/insertItem.php",
+                                    method:"POST",
+                                    success: function(data) {
+                                        // console.log(JSON.parse(data));
+                                    },
+                                    error: function(data) {
+                                        console.log(data);
+                                    }
+                                });
+                            }
+                        })
+                    ).done(function() {
+                        alert("db-table update completed");
+                        console.log("MySQL database updated with new items");
+                    });
+                    $(this).attr("value","Import to MySQL");
+                });
+                
+                // validating values
+                function validateValue(value,str) {
+                    return value !== undefined ? value.replace(str,"") : "";
+                }
+            });
+
+################################################################## PHP / MySQL #########################################################################
+// getUserInfo.php
+<?php
+    // include file containing db connection properties
+    include 'dbConnect.php';
+    
+    // get the user's info from the ssl cert
+    if (isset($_SERVER['HTTPS'])) {
+        // create an array from the user name
+        $arrName = explode(' ', $_SERVER['SSL_CLIENT_S_DN_CN']);
+        // create a PHP object 'user' and its properties
+        $user->FirstName = $arrName[1];
+        $user->LastName = $arrName[0];
+        $user->FullName = $arrName[1] . ' ' . $arrName[0];
+        $user->UName = $arrName[2];
+        $user-UserID = substr($_SERVER['SSL_CLIENT_SAN_Email_0'],0,strpos($_SERVER['SSL_CLIENT_SAN_Email_0'],'@'));
+        $user->WorkEmail = $_SEVER['SSL_CLIENT_SAN_Email_0'];
+    }
+    
+    // get the rest of the user's info from the Users table
+    $conn = OpenCon();
+    
+    $userID = "'" . $user->userID . "'";
+    $tableName = "Users";
+    $sql = "SELECT Department, WorkPhone FROM $tableName WHERE UserID = $userID";
+    // run query
+    if ($result = $conn->query($sql)) {
+        $outp = $result->fetch_assoc();
+        // add department and workphone to the user object
+        $user->Department = $outp["Department"];
+        $user->WorkPhone = $outp["WorkPhone"];
+    } else {
+        echo 'no results';
+    }
+    CloseCon($conn);
+    
+    // convert PHP object 'user' to JSON object
+    $userJSON = json_encode($user);
+    echo $userJSON;
+    // echo '<script>console.log(' . $userJSON . ');</script>';
+?>
+
+################################################################## PHP / MySQL #########################################################################
+// dbConnect.php
+<?php
+    function OpenCon() {
+        $servername = "aws-server";
+        $username = "iam-user";
+        $password = "password1";
+        $dbname = "db-test";
+        $conn = new mysqli($servername, $username, $password, $dbname);
+        if ($conn->connect_errno) {
+            die("Connection failed: " . $conn->connect_errno);
+            echo json_encode("failed to connect to the database);
+        }
+    }
+    function CloseCon($conn) {
+        $conn -> close();
+    }
+?>
+
+################################################################## PHP / MySQL #########################################################################
+// getItem.php
+<?php
+    include 'dbConnect.php';
+    $conn = OpenCon();
+    $id = $_GET['ID'];
+    $fieldName = $_GET['fieldName'];
+    $fieldValue = $_GET['fieldValue'];
+    $tableName = $_GET['tableName'];
+    
+    if ($fieldName && $fieldValue) {
+        $sql = "SELECT * FROM $tableName WHERE $fieldName = '$fieldValue'";
+    } elseif ($fieldName && !$fieldValue) {
+        $sql = "SELECT $fieldName FROM $tableName";
+    } elseif (!$fieldName && !$fieldValue && $id) {
+        $sql = "SELECT * FROM $tableName WHERE ID = $id";
+    }
+    
+    // echo '<script>console.log(' . $sql . ');</script>';
+    if ($result = $conn->query($sql)) {
+        $outp = $result->fetch_assoc();
+        echo json_encode($outp);
+    } else {
+        echo json_encode("no results");
+    }
+    CloseCon($conn);
+?>
+
+################################################################## PHP / MySQL #########################################################################
+// getItems.php
+<?php
+    include 'dbConnect.php';
+    $conn = OpenCon();
+    $columns = $_GET['columns'];
+    $tableName = $_GET['tableName'];
+    $fieldName = $_GET['fieldName'];
+    $fieldNameSort = $_GET['fieldNameSort'];
+    
+    if (isset($fieldNameSort)) {
+        $sql = "SELECT " . $columns . " FROM " . $tableName . " ORDER BY " . $fieldNameSort;
+    } elseif ($fieldName == "NA") {
+        $sql = "SELECT " . $columns . " FROM " . $tableName;
+    } else {
+        $sql = "SELECT " . $columns . " FROM " . $tableName . " WHERE " . $fieldName . " = " . $fieldValue;
+    }
+    // echo '<script>console.log(' . $sql . ');</script>';
+    if ($result = $conn->query($sql)) {
+        $outp = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode($outp);
+    } else {
+        echo json_encode("failure: " . $sql);
+    }
+    CloseCon($conn);
+?>
+
+################################################################## PHP / MySQL #########################################################################
+// insertItem.php
+<?php
+    include 'dbConnect.php';
+    $conn = OpenCon();
+    $object = array();
+    foreach ($_POST['tableInsert'] as $x => $x_value) {
+        if ($x == "tableName") {
+            $tableName = $x_value;
+        } else {
+            $object[$x] = "'" . $x_value . "'";
+        }
+    }
+    $keys = array_keys($object);
+    $keyString = implode(",",$keys);
+    $values = array_values($object);
+    $valueString = implode(",",$values);
+    $sql = "INSERT INTO $tableName ($keyString) VALUES ($valueString)";
+    // echo '<script>console.log(' . $sql . ');</script>';
+    if ($conn->query($sql) === TRUE) {
+        $last_id = $conn->insert_id;
+        echo json_encode()$last_id;
+    } else {
+        echo 'failure';
+    }
+    CloseCon($conn);
+?>
+
+################################################################## PHP / MySQL #########################################################################
+// updateItem.php
+<?php
+    include 'dbConnect.php';
+    $conn = OpenCon();
+    $tableName = $_POST['tableName'];
+    $id = $_POST['ID'];
+    $update = "";
+    $i = 0;
+    foreach ($_POST['tableUpdate'] as $key => $value) {
+        $update .= $key . " = '" . $value . "'," . ($i == count($_POST['tableUpdate']) ? ", " : "");
+        $i++;
+    }
+    $update = str_replace('"',"'", $update);
+    $update = rtrim($update,", "); // remove comma and space
+    echo $update;
+    $sql = "UPDATE " . $tblName . " SET " . $update . " WHERE ID = " . $id;
+    echo $sql;
+    if ($conn->query($sql) === TRUE) {
+        echo json_encode("update successful");
+    } else {
+        echo json_encode("failed to update");
+    }
+    CloseCon($conn);
+?>
