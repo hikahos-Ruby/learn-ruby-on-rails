@@ -11,39 +11,39 @@
 <% if @stock %>
      <div class="container">
          <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Company Name: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Company Name: </strong></div>
             <div class="col-sm-4 well well-sm"><%= @stock.company_name %> - <%= @stock.symbol %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Primary Exchange: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Primary Exchange: </strong></div>
             <div class="col-sm-4 well well-sm"><%= @stock.primary_exchange %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Current Ask: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Current Ask: </strong></div>
             <div class="col-sm-4 well well-sm"><%= number_to_currency(@stock.latest_price, :unit => "$") %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Change: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Change: </strong></div>
             <div class="col-sm-4 well well-sm"><%= number_to_currency(@stock.change, :unit => "$") %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Stock Open: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Stock Open: </strong></div>
             <div class="col-sm-4 well well-sm"><%= number_to_currency(@stock.open, :unit => "$") %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Day's Range: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Day's Range: </strong></div>
             <div class="col-sm-4 well well-sm"><%= number_to_currency(@stock.high, :unit => "$") %> - <%= number_to_currency(@stock.low, :unit => "$") %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Price/Earning Ratio: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Price/Earning Ratio: </strong></div>
             <div class="col-sm-4 well well-sm"><%= number_to_currency(@stock.pe_ratio, :unit => "$") %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Year High: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Year High: </strong></div>
             <div class="col-sm-4 well well-sm"><%= number_to_currency(@stock.week52_high, :unit => "$") %></div>
         </div>
         <div class="row">
-            <div class="col-sm-2 well well-sm"><strong>Year Low: </strong></div>
+            <div class="col-sm-3 well well-sm"><strong>Year Low: </strong></div>
             <div class="col-sm-4 well well-sm"><%= number_to_currency(@stock.week52_low, :unit => "$") %></div>
         </div>
     </div>

@@ -1,14 +1,73 @@
-<p id="notice"><%= notice %></p>
+<p id="notice"><% notice %></p>
 
-<p>
-  <strong>Ticker:</strong>
-  <%= @stock.ticker %>
-</p>
+<% begin %>
+  <% @stock_quote = StockQuote::Stock.quote(@stock.ticker) %>
+  <% @stock_company = StockQuote::Stock.company(@stock.ticker) %>
+  <% @stock_logo = StockQuote::Stock.logo(@stock.ticker) %>
+<% rescue StandardError %>
+  "Error"
+<% end %>
 
-<p>
-  <strong>User:</strong>
-  <%= @stock.user_id %>
-</p>
-
-<%= link_to 'Edit', edit_stock_path(@stock) %> |
-<%= link_to 'Back', stocks_path %>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <%= image_tag @stock_logo.url, width: '100', :style => 'margin-right: 10px;' %>
+    <span class="panel-title" style="font-size:2vw;"><%= @stock_quote.company_name %> - <%= @stock_quote.symbol %></span>
+  </div>
+  <div class="panel-body">
+    <div class="col-md-5 well well-lg">
+      <h1 class="bg-primary" style="margin-top:0; text-align:center;"><%= number_to_currency(@stock_quote.latest_price, :unit => "$") %></h1>
+      <div class="row">
+        <div class="col-sm-5"><strong>Change: </strong></div>
+        <div class="col-sm-7"><%= number_to_currency(@stock_quote.change, :unit => "$") %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-5"><strong>Stock Open: </strong></div>
+        <div class="col-sm-7"><%= number_to_currency(@stock_quote.open, :unit => "$") %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-5"><strong>Day's Range: </strong></div>
+        <div class="col-sm-7"><%= number_to_currency(@stock_quote.high, :unit => "$") %> - <%= number_to_currency(@stock_quote.low, :unit => "$") %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-5"><strong>P/E Ratio: </strong></div>
+        <div class="col-sm-7"><%= number_to_currency(@stock_quote.pe_ratio, :unit => "$") %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-5"><strong>Market Cap: </strong></div>
+        <div class="col-sm-7"><%= number_to_currency(number_to_human(@stock_quote.market_cap, :precision => 5), :unit => "$") %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-5"><strong>Year High: </strong></div>
+        <div class="col-sm-7"><%= number_to_currency(@stock_quote.week52_high, :unit => "$") %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-5"><strong>Year Low: </strong></div>
+        <div class="col-sm-7"><%= number_to_currency(@stock_quote.week52_low, :unit => "$") %></div>
+      </div>
+    </div>
+    <div class="col-md-7 well well-lg">
+      <div class="row">
+        <div class="col-sm-4"><strong>Primary Exchange: </strong></div>
+        <div class="col-sm-8"><%= @stock_quote.primary_exchange %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-4"><strong>Industry: </strong></div>
+        <div class="col-sm-8"><%= @stock_company.industry %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-4"><strong>Website: </strong></div>
+        <div class="col-sm-8"><%= link_to @stock_company.website, @stock_company.website %></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-4"><strong>CEO: </strong></div>
+        <div class="col-sm-8"><%= @stock_company.ceo %></div>
+      </div>
+      <strong>Description: </strong><p align="justify"><%= @stock_company.description %></p><br/>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <%= link_to 'Edit', edit_stock_path(@stock) %> |
+    <%= link_to 'Delete', stock_path(@stock), method: :delete, data: { confirm: 'Are you sure?' }%> |
+    <%= link_to 'Back', stocks_path %>
+  </div>
+</div>
