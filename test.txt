@@ -1,0 +1,51 @@
+// javascript with php super variables
+<script>
+    window.onload = function(){
+        var userFullName = function(){
+            var result = null;
+            var serverVarName = '<?php echo $_SERVER["SSL_CLIENT_S_DN_CN"]; ?>';
+            var arrName = serverVarName.split(' ');
+            result = arrName[1] + ' ' + arrName[0]; // John Doe
+            return result;
+        }(),
+        userID = function(){
+            var result = null;
+            var serverVarName = '<?php echo $_SERVER["SSL_CLIENT_S_DN_CN"]; ?>';
+            var arrName = serverVarName.split(' ');
+            result = arrName[2];
+            return result;
+        }(),
+        userID2 = function(){
+            var result = null;
+            var serverVarEmail = '<?php echo $_SERVER["SSL_CLIENT_SAN_Email_0"]; ?>';
+            result = serverVarEmail.substr(0,serverVarEmail.indexOf('@'));
+            return result;
+        }(),
+        userEmail = '<?php echo $_SERVER["SSL_CLIENT_SAN_Email_0"]; ?>;
+        // create html elements;
+        var divUser = document.createElement('DIV');
+        var divUserFullName = document.createElement('DIV');
+        var divUserID = document.createElement('DIV');
+        var divUserID2 = document.createElement('DIV');
+        var divUserEmail = document.createElement('DIV');
+        var textUserFullName = document.createTextNode('Full Name: ' + userFullName);
+        var textUserID = document.createTextNode('User ID: ' + userID);
+        var textUserID2 = document.createTextNode('User ID2: ' + userID2);
+        var textUserEmail = document.createTextNode('Email: ' + userEmail);
+        
+        divUserFullName.appendChild(textUserFullName);
+        divUserID.appendChild(textUserID);
+        divUserID2.appendChild(textUserID2);
+        divUserEmail.appendChild(textUserEmail);
+        divUser.appendChild(divUserFullName);
+        divUser.appendChild(divUserID);
+        divUser.appendChild(divUserID2);
+        divUser.appendChild(divUserEmail);
+        document.body.appendChild(divUser);
+        
+        console.log('userFullName: ' + userFullName);
+        console.log('userID: ' + userID);
+        console.log('userEmail: ' + userEmail);
+        console.log('userID2: ' + userID2);
+    }
+</script>
