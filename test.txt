@@ -49,3 +49,10 @@
         console.log('userID2: ' + userID2);
     }
 </script>
+
+
+// escaping apostrophes
+foreach($_POST['tableUpdate'] as $key => $value) {
+    $update .= "`" . $key . '` = "' . mysqli_real_escape_string($conn,$value) . '",' . ($i == count($_POST['tableUpdate']) ? ', ' : '');
+    $i++;
+}
