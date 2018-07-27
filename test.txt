@@ -56,3 +56,25 @@ foreach($_POST['tableUpdate'] as $key => $value) {
     $update .= "`" . $key . '` = "' . mysqli_real_escape_string($conn,$value) . '",' . ($i == count($_POST['tableUpdate']) ? ', ' : '');
     $i++;
 }
+
+// encrypting mysql connection
+function OpenCon(){
+    $servername = "server-name";
+    $port = "3306";
+    $username = "user-name";
+    $password = "password1";
+    $db = "db-name";
+    
+    $mysqli = mysqli_init();
+    mysqli_options($mysqli, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true);
+    $mysqli->ssl_set(NULL,NULL,"path/to/cert.pem",NULL,NULL);
+    $mysqli->real_connect($servername, $username, $password, $db, $port, NULL, MYSQLI_CLIENT_SSL);
+    if (mysqli_connect_errno()) {
+        die("Connection failed: " . $mysqli->connect_errno);
+        echo ("failed to connect to the database");
+    }
+    return $mysqli;
+}
+function CloseCon($mysqli){
+    $mysqli->close();
+}
