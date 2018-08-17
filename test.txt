@@ -78,3 +78,196 @@ function OpenCon(){
 function CloseCon($mysqli){
     $mysqli->close();
 }
+
+// insert data from csv to mysql
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Update MySQL</title>
+  <style>
+    #tableData table, th, td {
+      border: 1px solid gray;
+      border-collapse: collapse;
+      padding: 2px 10px;
+    }
+    #tableHeader, #buttonUpdate {
+      display: inline-block;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h3 id="tableHeader">Select a CSV file: </h3>
+  <input id="buttonRefresh" type="button" value="Refresh">
+  <input id="buttonUpdate" type="button" value="Import to MySQL">
+  input id="userFile" type="file" name="Open CSV File">
+  <div id="tableData"></div>
+  
+  <script src="jquery.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function(){
+      var data = {},
+          records = [],
+          getRecords = $.Deferred(),
+          filePath = '../files/',
+          file = '',
+          tableName = '',
+          headerText = '';
+      // hide 'Import to MySQL button on initial load;
+      $('#buttonUpdate').hide();
+      $('#buttonRefresh').on('click',function(){
+        location.reload();
+      });
+      $('#userFile').on('change',function(){
+        var userFile = $(this).prop('files')[0].name;
+        file = filePath + userFile;
+        tableName = getTableName(userFile);
+        headerText = tableName + " (Count: ";
+        // read the csv contents into an array;
+        getRecords = $.get(file,function(csvString){
+          records = csvString.split("\n");
+        });
+        $.when(getRecords).done(function(){
+          // iterate through the array;
+          $.each(records,function(index){
+            if(this.trim().length > 0){
+              var thisRecord = this.split("%%");
+              var obj = {};
+              $.each(thisRecord,function(key,value){
+                var thisKey = value.substr(0,value.indexOf(':')).trim();
+                var thisValue = value.substr(value.indexOf(':')+1).trim();
+                if(thisKey.length > 0){
+                  obj[thisKey] = thisValue;
+                }
+              });
+              // push key-value pairs into the data object;
+              data[index] = obj;
+            }
+          });
+          // build html table;
+          var html = "<table><thead><tr>";
+          $.each(data,function(key,value){
+            var parentVal = value;
+            // get the table headers from the first value;
+            if(key === '0'){
+              $.each(parentVal,function(key,value){
+                html += "<th>" + key + "</th>";
+              });
+              // close the table headers row;
+              html += "</tr></thead><tbody>";
+            }
+            // populate each row with values;
+            html += "<tr>";
+            $.each(parentVal,function(key,value){
+              html += "<td>" + value + "</td>";
+            });
+            html += "</tr>";
+          });
+          // close the table;
+          html += "</tbody></table>";
+          // render the table on the page;
+          $('#tableData').append(html);
+          $('#tableHeader').text(headerText + Object.keys(data).length.toString() + ")");
+          // hide the input button, show the update button
+          $('#userFile').hide();
+          $('#buttonUpdate').show();
+        });
+      });
+      // insert records in MySQL;
+      $('#buttonUpdate').on('click',function(){
+        $(this).attr('value','Updating ' + tableName + '...');
+        var newRecords = false;
+        var getExistingIDs = $.Deferred();
+        // get list of all existing ID's from the MySQL table;
+        var arrID = [];
+        var listID = {
+          columns:'ID',
+          fieldName:'NA',
+          tableName:tableName
+        }
+        getExistingIDs = $.ajax({
+          async:false,
+          data:listID,
+          url:'../dal/getItems.php',
+          method:'GET',
+          success:function(data){
+            var arrData = data.split(',');
+            $.each(arrData,function(key,value){
+              var newValue = value.substr(value.indexOf(':')+2);
+              newValue = newValue.substr(0,newValue.indexOf('\'));
+              arrID.push(newValue);
+            });
+          },
+          error:function(data){
+            //console.log(data);
+          }
+        });
+        $.when(getExistingIDs).done(function(){
+          $.each(data,function(key,value){
+            var parentVal = value;
+            var Id = null;
+            $.each(parentVal,function(key,value){
+              if(key === 'ID'){
+                Id = value;
+              }
+              objData[key] = value;
+            });
+            // add tableName attribute to the data object
+            objData.tableName = tableName;
+            // create the insert object
+            var dataInsert = {
+              ID:Id,
+              tableInsert:objData,
+              tableName:tableName
+            };
+            // insert new record, if not existing
+            if(arrID.indexOf(Id) === -1){
+              console.log(Id);
+              newRecords = true;
+              $.ajax({
+                data:dataInsert,
+                url:'../dal/insertItem.php',
+                method:'POST',
+                success:function(data){
+                  //console.log(data);
+                },
+                error:function(data){
+                  console.log(data);
+                }
+              });
+            }
+          });
+        }).then(function(){
+          alert(tableName + ' update completed');
+          if(newRecords){
+            console.log('MySQL database table ' + tableName + ' updated with new records');
+          }else{
+            console.log('No new records have been added');
+          }
+        });
+        $(this).attr('value','Import to MySQL');
+      });
+      
+      function getTableName(table){
+        var result = null;
+        table = table.substr(0,table.indexOf('.'));
+        switch(table){
+          case 'table1':
+            result = 'Table1';
+            break;
+          case 'table2':
+            result = 'Table2';
+            break;
+          case 'table3':
+            resykt = 'Table3';
+            break;
+        }
+        return result;
+      }
+    });
+  </script>
+</body>
+</html>
